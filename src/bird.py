@@ -1,21 +1,38 @@
+# Python 3.12.3
+import os
+import sys
 import inspect
 import platform
-from os import PathLike, path
+from os import PathLike
+from pathlib import Path
 from typing import Union
 
+src = os.path.dirname(Path(__file__))
+sys.path.append(src)
 
-class ExceptMethod:
+
+class BirdSystemError:
     """Customized error log for each method"""
     def __init__(self) -> None:
-        pass
-    
-    def stack_func(self, class_: str, error: Exception) -> str:
+        self.msg = None
+
+
+    def raise_pers(self, error: str):
+        """Customize error message attribute"""
+        self.msg = error
+
+
+    def stack_func(self, class_: str, error: str) -> str:
         """Use an error to return a function"""
-        err = f'"{class_ + '.' + inspect.stack()[1].function}": {error}'
+        if self.msg:
+            error = self.msg
+
+        func = inspect.stack()[1].function
+        err = f'"{class_ + '.' + func}": {error}'
         return f'Error method -> {err}'
 
 
-class BirdSystem(ExceptMethod):
+class BirdSystem(BirdSystemError):
     """Controls data types for operating systems"""
     def __init__(self) -> None:
         super().__init__()
@@ -34,21 +51,22 @@ class BirdSystem(ExceptMethod):
                 - File path not found.
 
             - Exception
-                - `ExceptMethod.stack_fun`: Pointer to the above error
+                - `BirdSystemError.stack_fun`: Pointer to the above error
         """
         try:
-            if not path.exists(file):
+            if not os.path.exists(file):
                 raise ValueError(f'File "{file}" not found')
 
             if platform.system() == 'Windows':
-                return str(path.abspath(file)).replace("/", "\\")
+                return str(os.path.abspath(file)).replace("/", "\\")
         except Exception as err:
+            self.raise_pers(err)
             class_name = str(self.__class__.__name__)
-            return self.stack_func(error=err, class_=class_name)
+            return self.stack_func(class_name, self.msg)
 
 
 if __name__ == '__main__':
     bs = BirdSystem()
-    arq_ = './src/config/basic_conecfeast.json'
+    arq_ = './src/config/basic_conect.json'
     path_like = bs.filepath_system(file=arq_)
     print(path_like)
