@@ -1,10 +1,9 @@
 # python 3.12.3
-
 import os
 import sys
 import pytest
 from pathlib import Path
-from src.bird import ExceptMethod, BirdSystem
+from src.bird import BirdSystemError, BirdSystem
 
 src = os.path.dirname(Path(__file__).parent)
 src = os.path.join(src, 'src')
@@ -13,7 +12,15 @@ sys.path.append(src)
 
 @pytest.fixture
 def excep():
-    return ExceptMethod()
+    return BirdSystemError()
+
+
+def test_raise_pers_and_atribut(excep):
+    assert excep.msg is None
+    excep.msg = 'Test msg error'
+    assert isinstance(excep.msg, str)
+    excep.raise_pers(error='Not is error')
+    assert excep.msg is 'Not is error'
 
 
 def test_stack_function(excep):
