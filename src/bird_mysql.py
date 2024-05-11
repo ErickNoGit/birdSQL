@@ -137,9 +137,48 @@ class BirdMySQL(BirdSystem):
             print(self.stack_func(self.__CLASS_NAME, err))
 
 
+    def show_db(self) -> tuple:
+        """Returns a tuple with the name of the databases"""
+        try:
+            if not isinstance(self.__conn, CMySQLConnection):
+                raise ValueError(f'You are not connected to MySQL')
+
+            command = """SHOW DATABASES"""
+            self.__cursor_.execute(command)
+            bases = tuple(zip(*self.__cursor_.fetchall()))
+            return bases[0] if bool(bases) else bases
+        except Exception as err:
+            print(self.stack_func(self.__CLASS_NAME, err))
+
+
+    def show_tables(self, db: Union[str, None] = None) -> tuple:
+        """Returns the name of the tables"""
+        try:
+            if db == self.__BASE_CONECT['data_base']:
+                raise ValueError(f'You not use database "{db}"')
+
+            if db in self.show_db():
+                command = f"""USE {db}"""
+                self.__cursor_.execute(command)
+            else:
+                raise ValueError(f'There is no database called "{db}"')
+
+            command = """SHOW TABLES"""
+            self.__cursor_.execute(command)
+            tables = tuple(zip(*self.__cursor_.fetchall()))
+            return tables[0] if bool(tables) else tables
+        except Exception as err:
+            print(self.stack_func(self.__CLASS_NAME, err))
+
+
 if __name__ == '__main__':
     bird_mysql = BirdMySQL()
     src = os.path.dirname(__file__)
 
     json_ = os.path.join(src, 'config', 'ignore_test.json')
     bird_mysql.conn_mysql(json_)
+    bancos = bird_mysql.show_db()
+    print(bancos)
+
+    tables = bird_mysql.show_tables('false_db')
+    print(tables)

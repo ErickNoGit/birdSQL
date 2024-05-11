@@ -88,3 +88,20 @@ def test_desconn_types(bird_mysql):
     bird_mysql.descon()
     assert bird_mysql.get_conn() is None
     assert bird_mysql.get_cursor() is None
+
+
+def test_show_db_return_type(bird_mysql):
+    assert bird_mysql.show_db() is None
+    json_ = os.path.join(src, 'config', 'ignore_test.json')    
+    bird_mysql.conn_mysql(json_)
+    assert isinstance(bird_mysql.show_db(), tuple)
+    assert bird_mysql.show_db() is not None
+
+
+def test_show_tables_conect(bird_mysql):
+    assert bird_mysql.show_tables() is None
+    json_ = os.path.join(src, 'config', 'ignore_test.json')    
+    bird_mysql.conn_mysql(json_)
+    assert bird_mysql.show_tables() is None
+    assert isinstance(bird_mysql.show_tables('bird_test'), tuple)
+    assert isinstance(bird_mysql.show_tables('false_db'), tuple)
