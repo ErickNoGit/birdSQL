@@ -46,6 +46,7 @@ class BirdMySQL(BirdSystem):
             `bool`: True if the connection was successful otherwise None
         Raises:
             - ValueError
+                - Too many arguments for function
                 - You forgot to pass arguments.
                 - Forgot a parameter
                 - The key is empty.
@@ -54,13 +55,16 @@ class BirdMySQL(BirdSystem):
                 - `BirdSystemError.stack_fun`: Pointer to the above errors
         """
         try:
-            if isinstance(con, str):
+            if con != None and kwargs:
+                raise ValueError('Too many arguments for function')
+
+            if isinstance(con, str) or isinstance(con, PathLike):
                 arq_ = self.filepath_system(con)
                 with open(arq_, 'r') as file_json:
                     con = dict(json.load(file_json))
 
             if kwargs:
-                con.update(kwargs)
+                con = kwargs
 
             if not bool(con):
                 raise ValueError('You forgot to pass arguments')
@@ -96,7 +100,7 @@ class BirdMySQL(BirdSystem):
             self.__BASE_CONECT.update(con)
             return True
         except Exception as err:
-            print(self.stack_func(self.__CLASS_NAME, err))
+            self.manager_error(self.__CLASS_NAME, err)
 
 
     def get_conn(self) -> dict:
@@ -108,8 +112,9 @@ class BirdMySQL(BirdSystem):
             if conex and dicio_conex:
                 return self.__debug_conn
         except Exception as err:
-            err = 'You are connected ?' if 'NoneType' in str(err) else str(err)
-            print(self.stack_func(self.__CLASS_NAME, err))
+            msg = 'You are connected ?'
+            err = msg if 'NoneType' in str(err) else str(err)
+            self.manager_error(self.__CLASS_NAME, err)
 
 
     def get_cursor(self) -> CMySQLCursor:
@@ -119,8 +124,9 @@ class BirdMySQL(BirdSystem):
                 self.__cursor_ = self.__conn.cursor()
                 return self.__cursor_
         except Exception as err:
-            err = 'You are connected ?' if 'NoneType' in str(err) else str(err)
-            print(self.stack_func(self.__CLASS_NAME, err))
+            msg = 'You are connected ?'
+            err = msg if 'NoneType' in str(err) else str(err)
+            self.manager_error(self.__CLASS_NAME, err)
 
 
     def descon(self) -> None:
@@ -134,10 +140,10 @@ class BirdMySQL(BirdSystem):
                 self.__conn.close()
                 self.__conn = None
         except Exception as err:
-            print(self.stack_func(self.__CLASS_NAME, err))
+            self.manager_error(self.__CLASS_NAME, err)
 
 
-    def show_db(self) -> tuple:
+    def get_databases(self) -> tuple:
         """Returns a tuple with the name of the databases"""
         try:
             if not isinstance(self.__conn, CMySQLConnection):
@@ -148,27 +154,45 @@ class BirdMySQL(BirdSystem):
             bases = tuple(zip(*self.__cursor_.fetchall()))
             return bases[0] if bool(bases) else bases
         except Exception as err:
-            print(self.stack_func(self.__CLASS_NAME, err))
+            self.manager_error(self.__CLASS_NAME, err)
 
 
-    def show_tables(self, db: Union[str, None] = None) -> tuple:
+    def get_tables(self, db: Union[str, None] = None) -> tuple:
         """Returns the name of the tables"""
         try:
-            if db == self.__BASE_CONECT['data_base']:
+            base_conet = self.__BASE_CONECT['data_base']
+            if db is None and base_conet is None:
                 raise ValueError(f'You not use database "{db}"')
 
-            if db in self.show_db():
-                command = f"""USE {db}"""
-                self.__cursor_.execute(command)
-            else:
-                raise ValueError(f'There is no database called "{db}"')
+            if db != None:
+                if db in self.get_databases():
+                    command = f"""USE {db}"""
+                    self.__cursor_.execute(command)
+                else:
+                    raise ValueError(f'There is no database called "{db}"')
 
             command = """SHOW TABLES"""
             self.__cursor_.execute(command)
             tables = tuple(zip(*self.__cursor_.fetchall()))
             return tables[0] if bool(tables) else tables
         except Exception as err:
-            print(self.stack_func(self.__CLASS_NAME, err))
+            msg = 'Connect to the database correctly'
+            err = msg if 'NoneType' in str(err) else str(err)
+            self.manager_error(self.__CLASS_NAME, err)
+
+
+    def get_columns(self, tbl: str) -> tuple:
+        """Return the name of the columns"""
+        try:
+            if tbl in self.get_tables():
+                command = f"""SHOW COLUMNS FROM {tbl}"""
+                self.__cursor_.execute(command)
+                tables = tuple(zip(*self.__cursor_.fetchall()))
+                return tables[0] if bool(tables) else tables
+            else:
+                raise ValueError(f'Table "{tbl}" not found')
+        except Exception as err:
+            self.manager_error(self.__CLASS_NAME, err)
 
 
 if __name__ == '__main__':
@@ -176,9 +200,9 @@ if __name__ == '__main__':
     src = os.path.dirname(__file__)
 
     json_ = os.path.join(src, 'config', 'ignore_test.json')
-    bird_mysql.conn_mysql(json_)
-    bancos = bird_mysql.show_db()
-    print(bancos)
+    print(bird_mysql.conn_mysql(json_))
+    columns = bird_mysql.get_columns('test1')
+    print(columns)
 
-    tables = bird_mysql.show_tables('false_db')
-    print(tables)
+    columns = bird_mysql.get_columns('false_tbl')
+    print(columns)

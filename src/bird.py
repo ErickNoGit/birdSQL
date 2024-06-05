@@ -14,22 +14,27 @@ sys.path.append(src)
 class BirdSystemError:
     """Customized error log for each method"""
     def __init__(self) -> None:
-        self.msg = None
+        self.__stack_msg_err = [None]
 
 
-    def raise_pers(self, error: str):
-        """Customize error message attribute"""
-        self.msg = error
+    def show_stack_err(self) -> list:
+        """Show error log"""
+        print(self.__stack_msg_err)
+        return self.__stack_msg_err    
 
 
-    def stack_func(self, class_: str, error: str) -> str:
+    def stack_func(self, name_class: str, error: Exception) -> str:
         """Use an error to return a function"""
-        if self.msg:
-            error = self.msg
-
-        func = inspect.stack()[1].function
-        err = f'"{class_ + '.' + func}": {error}'
+        func = inspect.stack()[2].function
+        err = f'"{name_class + '.' + func}": {error}'
         return f'Error method -> {err}'
+
+
+    def manager_error(self, class_: str, err: Exception) -> None:
+        """Manages the insertion of errors into the stack"""
+        err = self.stack_func(class_, err)
+        if self.__stack_msg_err[-1] != err:
+            self.__stack_msg_err.append(err)
 
 
 class BirdSystem(BirdSystemError):
@@ -60,9 +65,9 @@ class BirdSystem(BirdSystemError):
             if platform.system() == 'Windows':
                 return str(os.path.abspath(file)).replace("/", "\\")
         except Exception as err:
-            self.raise_pers(err)
             class_name = str(self.__class__.__name__)
-            return self.stack_func(class_name, self.msg)
+            self.manager_error(class_name, err)
+            return self.stack_func(class_name, err)
 
 
 if __name__ == '__main__':

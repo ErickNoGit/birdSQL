@@ -23,17 +23,15 @@ def bird_mysql():
     return BirdMySQL()
 
 
-def test_conn_mysql_false_arquivo(bird_mysql, bird):
+def test_conn_mysql_false_arquivo(bird_mysql):
     false_arq = 'test_false.json'
     bird_mysql.conn_mysql(false_arq)
-    assert None == bird.msg
     result = bird_mysql.conn_mysql(false_arq)
     assert result == None
 
 
 def test_conn_mysql_true_arq(bird_mysql):
     json_ = os.path.join(src, 'config', 'ignore_test.json')
-    assert bird_mysql.msg is not json_
     assert isinstance(bird_mysql.conn_mysql(json_), bool)
     assert bird_mysql.descon() == None
 
@@ -90,18 +88,30 @@ def test_desconn_types(bird_mysql):
     assert bird_mysql.get_cursor() is None
 
 
-def test_show_db_return_type(bird_mysql):
-    assert bird_mysql.show_db() is None
+def test_get_databases_return_type(bird_mysql):
+    assert bird_mysql.get_databases() is None
     json_ = os.path.join(src, 'config', 'ignore_test.json')    
     bird_mysql.conn_mysql(json_)
-    assert isinstance(bird_mysql.show_db(), tuple)
-    assert bird_mysql.show_db() is not None
+    assert isinstance(bird_mysql.get_databases(), tuple)
+    assert bird_mysql.get_databases() is not None
+    bird_mysql.descon()
 
 
-def test_show_tables_conect(bird_mysql):
-    assert bird_mysql.show_tables() is None
+def test_get_tables_conect(bird_mysql):
+    assert bird_mysql.get_tables() is None
     json_ = os.path.join(src, 'config', 'ignore_test.json')    
     bird_mysql.conn_mysql(json_)
-    assert bird_mysql.show_tables() is None
-    assert isinstance(bird_mysql.show_tables('bird_test'), tuple)
-    assert isinstance(bird_mysql.show_tables('false_db'), tuple)
+    assert isinstance(bird_mysql.get_tables(), tuple)
+    assert isinstance(bird_mysql.get_tables('bird_test'), tuple)
+    assert isinstance(bird_mysql.get_tables('false_db'), tuple)
+    bird_mysql.descon()
+
+
+def test_get_columns_types_error(bird_mysql):
+    json_ = os.path.join(src, 'config', 'ignore_test.json')    
+    bird_mysql.conn_mysql(json_)
+    assert bird_mysql.get_columns('false-tbl') is None
+    assert bird_mysql.get_columns('test1') is not None
+    assert isinstance(bird_mysql.get_columns('test2'), tuple)
+    bird_mysql.descon()
+    

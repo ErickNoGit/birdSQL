@@ -15,21 +15,22 @@ def excep():
     return BirdSystemError()
 
 
-def test_raise_pers_and_atribut(excep):
-    assert excep.msg is None
-    excep.msg = 'Test msg error'
-    assert isinstance(excep.msg, str)
-    excep.raise_pers(error='Not is error')
-    assert excep.msg is 'Not is error'
-
-
 def test_stack_function(excep):
     class_name = 'testclass'
     error = ValueError('My error')
-    result = excep.stack_func(class_=class_name, error=error)
+    result = excep.stack_func(class_name, error)
     assert isinstance(result, str)
     assert class_name in result
     assert str(error) in result
+
+
+def test_manager_error_local_stack(excep):
+    class_name = 'fake_class'
+    raise_fake = ValueError('My exception')
+    assert excep.show_stack_err() == [None]
+    assert excep.manager_error(class_name, raise_fake) is None
+    assert bool(excep.show_stack_err()) is True
+    assert len(excep.show_stack_err()) > 1
 
 
 @pytest.fixture
